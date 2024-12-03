@@ -1,4 +1,3 @@
-//Estrutura programa Tabela Hash - Professor Lucas.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,30 +6,38 @@
 
 int maxsize = 30;
 
-typedef struct Contato{
+typedef struct Contato {
     char nome[51];
     char numero[11];
 } Contato;
 
-struct hashmap{
+struct hashmap {
     Contato **map;
     int len;
 } hashTable;
 
+void inicializarTabela();
+void rehash();
+unsigned int hash(char *nome);
+void adicionarContato(char *nome, char *numero);
+void buscarContato(char *nome);
+void removerContato(char *nome);
+void exibirContatos();
+
 void inicializarTabela() {
-    hashTable.map = (Contato **) calloc(sizeof(Contato), maxsize);
+    hashTable.map = (Contato **) calloc(maxsize, sizeof(Contato *));
     for (int i = 0; i < maxsize; i++) {
         hashTable.map[i] = NULL;
     }
     hashTable.len = 0;
 }
 
-void rehash(){
+void rehash() {
     maxsize++;
-    Contato** oldmap = hashTable.map;
-    hashTable.map = (Contato **) calloc(sizeof(Contato), maxsize);
+    Contato **oldmap = hashTable.map;
+    hashTable.map = (Contato **) calloc(maxsize, sizeof(Contato *));
     hashTable.len = 0;
-    for (int i = 0; i < maxsize-1; i++) {
+    for (int i = 0; i < maxsize - 1; i++) {
         if (oldmap[i] != NULL) {
             adicionarContato(oldmap[i]->nome, oldmap[i]->numero);
         }
@@ -38,17 +45,20 @@ void rehash(){
     free(oldmap);
 }
 
-unsigned int hash(char *nome){
+unsigned int hash(char *nome) {
     int len = (int) strlen(nome);
     double somatorio = 0;
-    for (int i=0; i < len; i++){
-        somatorio += pow(nome[i], (len-i));
+    for (int i = 0; i < len; i++) {
+        somatorio += pow(nome[i], (len - i));
     }
     int pos = ((int) sqrt(somatorio)) % maxsize;
     return pos >= 0 ? pos : -pos;
 }
 
 void adicionarContato(char *nome, char *numero) {
+    clock_t start, end;
+    start = clock();
+    double cpu_time_used;
     int index = hash(nome);
     Contato *novoCtt = (Contato *) malloc(sizeof(Contato));
     strcpy(novoCtt->nome, nome);
@@ -57,11 +67,14 @@ void adicionarContato(char *nome, char *numero) {
     if (hashTable.map[index] == NULL) {
         hashTable.map[index] = novoCtt;
         hashTable.len++;
+        end = clock();
+        cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC * 1000;
+        printf("(Tempo de insercao: %.4f ms)\n", cpu_time_used);
         printf("Contato adicionado!\n");
     } else {
-        if (strcmp(hashTable.map[index]->nome, nome) == 0){
+        if (strcmp(hashTable.map[index]->nome, nome) == 0) {
             printf("Não é permitido inserir nomes iguais.\n");
-        } else{
+        } else {
             rehash();
             adicionarContato(nome, numero);
         }
@@ -70,10 +83,9 @@ void adicionarContato(char *nome, char *numero) {
 }
 
 void buscarContato(char *nome) {
-    
     clock_t start, end;
     start = clock();
-    
+
     int index = hash(nome);
     if (hashTable.map[index] != NULL) {
         end = clock();
@@ -89,7 +101,7 @@ void buscarContato(char *nome) {
 void removerContato(char *nome) {
     clock_t start, end;
     start = clock();
-    
+
     int index = hash(nome);
     if (hashTable.map[index] != NULL) {
         Contato *c = hashTable.map[index];
@@ -115,16 +127,11 @@ void exibirContatos() {
     }
 }
 
-
-
 int main() {
     int opcao;
-    
+
     char nome[51];
     char numero[11];
-
-    clock_t start, end;
-    double cpu_time_used;
 
     inicializarTabela();
 
@@ -136,7 +143,7 @@ int main() {
         printf("4 - Exibir todos os contatos\n");
         printf("0 - Sair\n");
         printf("Digite uma opcao: ");
-        
+
         scanf("%d", &opcao);
 
         switch (opcao) {
@@ -145,11 +152,7 @@ int main() {
                 scanf("%s", nome);
                 printf("Numero do contato: ");
                 scanf("%s", numero);
-                start = clock();
                 adicionarContato(nome, numero);
-                end = clock();
-                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC * 1000;
-                printf("(Tempo de insercao: %.4f ms)\n", cpu_time_used);
                 break;
             case 2:
                 printf("Nome do contato: ");
